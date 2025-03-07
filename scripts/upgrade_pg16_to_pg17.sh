@@ -9,6 +9,8 @@ UPGRADE_TEMP_DIR="/var/lib/postgresql/upgrade_temp"
 if [ ! -d "$TEMP_DIR" ]; then
     echo "Creating necessary directories..."
     mkdir -p $TEMP_DIR
+    chown postgres:postgres $TEMP_DIR
+    chmod 700 $TEMP_DIR
 fi
 
 # Create upgrade_temp directory if it doesn't exist
@@ -17,6 +19,18 @@ if [ ! -d "$UPGRADE_TEMP_DIR" ]; then
     mkdir -p $UPGRADE_TEMP_DIR
     chown postgres:postgres $UPGRADE_TEMP_DIR
     chmod 700 $UPGRADE_TEMP_DIR
+fi
+
+# Clear temporary directories if they aren't empty
+echo "Checking and clearing temporary directories if needed..."
+if [ -n "$(ls -A $TEMP_DIR 2>/dev/null)" ]; then
+    echo "Clearing existing files in $TEMP_DIR..."
+    rm -rf "$TEMP_DIR"/*
+fi
+
+if [ -n "$(ls -A $UPGRADE_TEMP_DIR 2>/dev/null)" ]; then
+    echo "Clearing existing files in $UPGRADE_TEMP_DIR..."
+    rm -rf "$UPGRADE_TEMP_DIR"/*
 fi
 
 # Backup the original pg_hba.conf file
@@ -28,9 +42,6 @@ else
     echo "Error: pg_hba.conf not found in $DATA_DIR"
     exit 0
 fi
-
-# Remove all files in the temporary directory, maybe from previous runs
-rm -rf $TEMP_DIR/*
 
 echo "Setting ownership and permissions..."
 chown -R postgres:postgres $DATA_DIR
