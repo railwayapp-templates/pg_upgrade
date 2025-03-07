@@ -4,7 +4,7 @@ set -e
 
 DATA_DIR="/var/lib/postgresql/data/pgdata"
 TEMP_DIR="/var/lib/postgresql/data/pgdata17"
-UPGRADE_TEMP_DIR="/var/lib/postgresql/data/upgrade_temp"
+UPGRADE_TEMP_DIR="/var/lib/postgresql/upgrade_temp"
 
 if [ ! -d "$TEMP_DIR" ]; then
     echo "Creating necessary directories..."
@@ -62,7 +62,7 @@ fi
 echo "Initializing temporary PostgreSQL 17 data directory..."
 su - postgres -c "/usr/lib/postgresql/17/bin/initdb -D $TEMP_DIR"
 
-# Run pg_upgrade check
+# Run pg_upgrade
 echo "Running pg_upgrade check..."
 
 su - postgres -c "/usr/lib/postgresql/17/bin/pg_upgrade \
@@ -72,7 +72,6 @@ su - postgres -c "/usr/lib/postgresql/17/bin/pg_upgrade \
     --new-bindir=/usr/lib/postgresql/17/bin \
     --old-port=50432 \
     --new-port=50433 \
-    --link \
     --check"
 
 echo "Running pg_upgrade..."
@@ -83,12 +82,12 @@ su - postgres -c "/usr/lib/postgresql/17/bin/pg_upgrade \
     --old-bindir=/usr/lib/postgresql/16/bin \
     --new-bindir=/usr/lib/postgresql/17/bin \
     --old-port=50432 \
-    --new-port=50433 \
-    --link"
+    --new-port=50433"
 
-echo "Moving upgraded data into place and removing old directory..."
-rm -rf $DATA_DIR
-mv $TEMP_DIR $DATA_DIR
+# Replace the old data with the new data
+echo "Replacing the old PostgreSQL 16 data with the upgraded PostgreSQL 17 data..."
+rm -rf $DATA_DIR/*
+cp -r $TEMP_DIR/* $DATA_DIR/
 
 # Restore the original pg_hba.conf file
 echo "Restoring original pg_hba.conf configuration..."
