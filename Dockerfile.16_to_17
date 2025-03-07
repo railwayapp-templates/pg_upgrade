@@ -1,0 +1,20 @@
+FROM postgres:16
+
+# Install PostgreSQL 17
+RUN apt-get update && apt-get -y install \
+    lsb-release \
+    gnupg2 \
+    curl \
+    ncurses-bin && \
+    echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
+    curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg && \
+    apt-get update && apt-get -y install \
+    postgresql-17 \
+    postgresql-client-17
+    
+WORKDIR /app
+
+# Add upgrade script
+COPY --chmod=755 ./scripts/upgrade_pg16_to_pg17.sh ./upgrade.sh
+
+ENTRYPOINT ["/app/upgrade.sh"]
